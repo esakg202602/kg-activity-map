@@ -58,13 +58,12 @@ canvas.vid{width:100%;max-width:280px;aspect-ratio:9/16;border-radius:22px;displ
   <div class="glass card"><div id="stage"></div><div class="muted" id="mapInfo" style="text-align:center;margin-top:8px">Вращай карту · колесо — масштаб · нажми на область или столбик</div></div>
   <div class="glass card"><b>Рейтинг областей</b><div id="rank" style="margin-top:10px"></div></div>
  </div>
- <p style="text-align:center"><a class="lnk" href="#admin">Для администратора →</a></p>
 </section>
 
 <section class="view" id="v-search"><div class="glass card"><b>Найди себя на карте</b><input id="q" placeholder="@instagram, имя или область" autocomplete="off" style="margin-top:10px"><div id="res"></div></div></section>
 
 <section class="view" id="v-admin">
- <div class="glass card" id="login" style="max-width:380px;margin:0 auto 14px" hidden><b>Вход для администратора</b><input id="lEmail" type="email" placeholder="Email" autocomplete="username" style="margin-top:10px"><input id="lPass" type="password" placeholder="Пароль (мин. 6 символов)" autocomplete="current-password"><button class="btn pri glass" id="lIn">Войти</button> <button class="btn glass" id="lUp">Создать аккаунт</button><div class="muted" id="lMsg" style="margin-top:8px"></div></div>
+ <div class="glass card" id="login" style="max-width:380px;margin:0 auto 14px" hidden><b>Вход для администратора</b><input id="lEmail" type="text" placeholder="Логин или email" autocomplete="username" style="margin-top:10px"><input id="lPass" type="password" placeholder="Пароль (мин. 6 символов)" autocomplete="current-password"><button class="btn pri glass" id="lIn">Войти</button> <div class="muted" id="lMsg" style="margin-top:8px"></div></div>
  <div class="grid g2" id="adm" hidden>
   <div class="glass card"><b>Добавить участника</b>
    <input id="aNick" placeholder="@nickname" style="margin-top:10px"><select id="aReg"></select><input id="aName" placeholder="Имя (необязательно)">
@@ -187,14 +186,14 @@ function adminList(){if(mode!=="adm"||!canEdit)return;
 $("#add").onclick=async()=>{if(await addP($("#aNick").value,$("#aReg").value,$("#aName").value,$("#aOk").checked)){$("#aNick").value="";$("#aName").value=""}};
 $("#demo").onclick=async()=>{const w=["aibek","nurzat","aigerim","bakyt","ermek","mirlan","kanykei","azamat","zhyldyz","tilek"];for(let i=0;i<w.length;i++)await addP(w[i]+"_kg",N[(i*3+i%4)%N.length],"",true,true);await load();toast("Демо-данные загружены")};
 $("#wipe").onclick=async()=>{if(confirm("Удалить всех участников?")){try{await api("/rest/v1/participants?n=gt.0",{method:"DELETE"});await log("Очистка");await load()}catch(e){toast("Нет прав")}}};
-async function login(signup){const email=$("#lEmail").value.trim(),password=$("#lPass").value;
+async function login(signup){let email=$("#lEmail").value.trim().toLowerCase();if(email&&!email.includes("@"))email+="@kgmap.app";const password=$("#lPass").value;
  try{const r=await fetch(SB+"/auth/v1/"+(signup?"signup":"token?grant_type=password"),{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})});const j=await r.json();
   if(!r.ok)throw new Error(j.msg||j.error_description||"Ошибка входа");
   if(!j.access_token)return toast("Аккаунт создан. Подтверди почту и войди");
   TOK=j.access_token;EMAIL=email;try{localStorage.setItem("kgtok",JSON.stringify({t:TOK,e:email,x:Date.now()+(j.expires_in||3600)*1000}))}catch(e){}
   await checkAdmin()}catch(e){toast(e.message)}}
 async function checkAdmin(){canEdit=false;if(TOK){try{canEdit=(await api("/rest/v1/admins?select=email")).length>0}catch(e){TOK=null}}route();await load()}
-$("#lIn").onclick=()=>login(false);$("#lUp").onclick=()=>login(true);
+$("#lIn").onclick=()=>login(false);$("#lPass").onkeydown=e=>{if(e.key==="Enter")login(false)};
 $("#logout").onclick=()=>{TOK=null;canEdit=false;try{localStorage.removeItem("kgtok")}catch(e){}route();load()};
 
 /* ===== caption ===== */
@@ -236,7 +235,7 @@ $("#rec").onclick=()=>{if(!cv.captureStream||!window.MediaRecorder)return toast(
 /* ===== shell ===== */
 function show(v){document.querySelectorAll(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));scrollTo({top:0,behavior:"smooth"})}
 function go(v){document.startViewTransition?document.startViewTransition(()=>show(v)):show(v)}
-function route(){mode=location.hash==="#admin"?"adm":"pub";const a=mode==="adm";
+function route(){mode=location.hash==="#adminesa"?"adm":"pub";const a=mode==="adm";
  $("#ttl").textContent=a?"⚙ Панель администратора":"🇰🇬 Карта активности";$("#sub").textContent=a?"Закрытый раздел":"Соревнование областей Кыргызстана · 3D";
  $("#nav").innerHTML=a?(canEdit?'<button data-v="admin">👥 Участники</button><button data-v="studio">🎬 Студия</button><button data-v="out">🌍 На сайт</button>':'<button data-v="admin" class="on">🔐 Вход</button><button data-v="out">🌍 На сайт</button>'):'<button data-v="map">🗺 3D Карта</button><button data-v="search">🔎 Поиск</button>';
  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>b.dataset.v==="out"?location.hash="":go(b.dataset.v));
