@@ -1,0 +1,5 @@
+services:
+  - type: web
+    name: kg-activity-map
+    runtime: static
+    staticPublishPath: .

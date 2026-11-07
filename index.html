@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070b1a"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>КЫРГЫЗСТАН · 3D карта активности</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--bg:#070b1a;--ink:#eef2ff;--mut:#9aa6c9;--acc:#ff4d5e;--acc2:#ffd166;--cy:#5ee7ff;--glass:rgba(255,255,255,.08);--edge:rgba(255,255,255,.22);--card:rgba(255,255,255,.06);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eaf0ff;--ink:#0d1330;--mut:#4b5683;--glass:rgba(255,255,255,.55);--edge:rgba(255,255,255,.9);--card:rgba(255,255,255,.6)}}
+:root[data-theme="light"]{--bg:#eaf0ff;--ink:#0d1330;--mut:#4b5683;--glass:rgba(255,255,255,.55);--edge:rgba(255,255,255,.9);--card:rgba(255,255,255,.6)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+.aur{position:fixed;inset:0;z-index:-1;background:radial-gradient(40% 35% at 15% 10%,rgba(255,77,94,.35),transparent),radial-gradient(45% 40% at 90% 20%,rgba(94,231,255,.28),transparent),radial-gradient(50% 45% at 50% 100%,rgba(130,90,255,.3),transparent);animation:drift 14s ease-in-out infinite alternate}
+@keyframes drift{to{transform:scale(1.15) translate(2%,-2%)}}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 16px 110px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+h1{font-size:clamp(20px,4.5vw,30px);margin:0;letter-spacing:-.5px;background:linear-gradient(90deg,var(--acc),var(--acc2),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub,.muted{color:var(--mut);font-size:13px}
+.glass{position:relative;border:1px solid var(--edge);background:linear-gradient(160deg,var(--glass),rgba(255,255,255,.02));backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -8px 16px rgba(255,255,255,.04),0 10px 30px rgba(0,0,0,.28);border-radius:22px;color:var(--ink)}
+.btn{font-family:inherit;font-weight:600;font-size:14px;padding:11px 18px;border-radius:999px;cursor:pointer;overflow:hidden;transition:transform .25s cubic-bezier(.3,1.6,.5,1);display:inline-flex;align-items:center;gap:8px}
+.btn::before{content:"";position:absolute;left:8%;right:8%;top:2px;height:45%;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.55),transparent);pointer-events:none}
+.btn::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--x,50%) var(--y,50%),rgba(255,255,255,.45),transparent 45%);opacity:0;transition:opacity .3s;pointer-events:none}
+.btn:hover{transform:translateY(-2px) scale(1.04)}.btn:hover::after{opacity:1}.btn:active{transform:scale(.95)}
+.btn.pri{background:linear-gradient(160deg,rgba(255,77,94,.75),rgba(255,140,80,.45));box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 26px rgba(255,77,94,.4)}
+.btn.sm{padding:7px 12px;font-size:12px}.btn[disabled]{opacity:.5;pointer-events:none}
+.view{display:none}.view.on{display:block;animation:inn .55s cubic-bezier(.2,.9,.3,1)}
+@keyframes inn{from{opacity:0;transform:translateY(18px) scale(.98);filter:blur(8px)}}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1.6fr 1fr}@media(max-width:820px){.g2{grid-template-columns:1fr}}
+.card{padding:16px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{padding:14px;text-align:center}.stat b{display:block;font-size:26px}.stat span{font-size:12px;color:var(--mut)}
+#stage{width:100%;height:min(62vh,520px);border-radius:18px;position:relative;cursor:grab;touch-action:none}#stage canvas{border-radius:18px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;margin-bottom:6px;background:var(--card);animation:inn .5s both;cursor:pointer}
+.row .n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:linear-gradient(160deg,var(--acc),var(--acc2));color:#1a1030;flex:none}
+.bar{height:8px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px;box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}.bar i{display:block;height:100%;background:linear-gradient(180deg,#fff8,transparent 50%),linear-gradient(90deg,var(--cy),var(--acc));transition:width .8s cubic-bezier(.2,.9,.3,1)}
+input,select,textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--edge);background:var(--card);color:var(--ink);font:inherit;outline:none;margin-bottom:8px}
+input:focus,select:focus{border-color:var(--cy);box-shadow:0 0 0 3px rgba(94,231,255,.25)}option{color:#111}textarea{min-height:140px}
+nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:4px;padding:6px;border-radius:999px;z-index:20;max-width:calc(100% - 20px)}
+nav button{all:unset;cursor:pointer;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--mut);transition:.3s;white-space:nowrap}
+nav button.on{color:var(--ink);background:linear-gradient(160deg,rgba(255,255,255,.3),rgba(255,255,255,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 14px rgba(0,0,0,.25)}
+.found{padding:16px;margin-top:10px;animation:inn .5s}.tag{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(94,231,255,.18);font-size:12px}
+canvas.vid{width:100%;max-width:280px;aspect-ratio:9/16;border-radius:22px;display:block;margin:0 auto;background:#000}video{width:90px;border-radius:12px}
+.toast{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-90px);padding:11px 20px;border-radius:999px;z-index:50;transition:transform .5s cubic-bezier(.3,1.5,.5,1)}.toast.on{transform:translate(-50%,0)}
+[hidden]{display:none!important}.warn{padding:12px 16px;margin-bottom:12px;font-size:13px}a.lnk{color:var(--cy);cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+<div class="aur"></div>
+<div class="wrap">
+<header><div><h1 id="ttl">🇰🇬 Карта активности</h1><div class="sub" id="sub">Соревнование областей Кыргызстана · 3D</div></div>
+<div style="display:flex;gap:8px"><button class="btn glass sm" id="theme">🌓</button><button class="btn glass sm" id="logout" hidden>Выйти</button><button class="btn glass sm" id="inst" hidden>⬇ Установить</button></div></header>
+<div class="glass warn" id="warn" hidden></div>
+
+<section class="view" id="v-map">
+ <div class="stats"><div class="glass stat"><b id="sTot">0</b><span>участников</span></div><div class="glass stat"><b id="sLead">—</b><span>лидер</span></div><div class="glass stat"><b id="sToday">0</b><span>сегодня</span></div></div>
+ <div class="grid g2">
+  <div class="glass card"><div id="stage"></div><div class="muted" id="mapInfo" style="text-align:center;margin-top:8px">Вращай карту · колесо — масштаб · нажми на область или столбик</div></div>
+  <div class="glass card"><b>Рейтинг областей</b><div id="rank" style="margin-top:10px"></div></div>
+ </div>
+ <p style="text-align:center"><a class="lnk" href="#admin">Для администратора →</a></p>
+</section>
+
+<section class="view" id="v-search"><div class="glass card"><b>Найди себя на карте</b><input id="q" placeholder="@instagram, имя или область" autocomplete="off" style="margin-top:10px"><div id="res"></div></div></section>
+
+<section class="view" id="v-admin">
+ <div class="glass card" id="login" style="max-width:380px;margin:0 auto 14px" hidden><b>Вход для администратора</b><input id="lEmail" type="email" placeholder="Email" autocomplete="username" style="margin-top:10px"><input id="lPass" type="password" placeholder="Пароль (мин. 6 символов)" autocomplete="current-password"><button class="btn pri glass" id="lIn">Войти</button> <button class="btn glass" id="lUp">Создать аккаунт</button><div class="muted" id="lMsg" style="margin-top:8px"></div></div>
+ <div class="grid g2" id="adm" hidden>
+  <div class="glass card"><b>Добавить участника</b>
+   <input id="aNick" placeholder="@nickname" style="margin-top:10px"><select id="aReg"></select><input id="aName" placeholder="Имя (необязательно)">
+   <label class="muted"><input type="checkbox" id="aOk" style="width:auto;margin:0 6px 0 0">Есть согласие на публичный ник</label><br><br>
+   <button class="btn pri glass" id="add">Добавить участника</button> <button class="btn glass" id="demo">Демо-данные</button> <button class="btn glass" id="wipe">Очистить</button></div>
+  <div class="glass card"><b>Участники</b><div id="list" style="margin-top:10px;max-height:300px;overflow:auto"></div><div class="muted" id="hist" style="margin-top:8px"></div></div>
+ </div>
+</section>
+
+<section class="view" id="v-studio">
+ <div class="grid g2">
+  <div class="glass card"><b>Видеостудия · Reels 9:16</b><select id="sReg" style="margin-top:10px"></select>
+   <canvas class="vid" id="cv" width="360" height="640"></canvas><br>
+   <div style="text-align:center"><button class="btn pri glass" id="rec">● Записать (15 сек)</button> <button class="btn glass" id="prev">▶ Просмотр</button></div><div class="muted" id="recMsg" style="text-align:center;margin-top:8px"></div></div>
+  <div class="grid"><div class="glass card"><b>Описание и хештеги</b><textarea id="cap" style="margin-top:10px"></textarea>
+   <button class="btn glass" id="regen">↻ Заново</button> <button class="btn glass" id="copy">Копировать</button></div>
+   <div class="glass card"><b>Моя видеотека</b><div id="lib" class="muted" style="margin-top:10px">Пока пусто</div></div></div>
+ </div>
+</section>
+</div>
+<nav class="glass" id="nav"></nav><div class="toast glass" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const N=["Бишкек","Ошская область","Джалал-Абадская область","Чуйская область","Иссык-Кульская область","Нарынская область","Таласская область","Баткенская область","Ош (город)"];
+const G={
+"Таласская область":[[120,187],[130,165],[150,148],[172,140],[190,146],[215,153],[250,166],[298,172],[298,182],[285,197],[250,195],[200,195],[160,193]],
+"Чуйская область":[[290,128],[325,118],[355,122],[390,128],[425,138],[450,130],[480,135],[528,128],[520,145],[470,152],[432,172],[412,178],[375,185],[335,205],[318,218],[300,215],[264,213],[285,197],[298,182],[298,172],[285,150]],
+"Джалал-Абадская область":[[78,250],[95,232],[115,215],[145,200],[160,193],[200,195],[250,195],[285,197],[264,213],[300,215],[318,218],[318,232],[322,250],[345,262],[348,282],[320,290],[296,291],[268,298],[236,300],[215,298],[190,290],[165,278],[125,262]],
+"Нарынская область":[[318,218],[335,205],[375,185],[412,178],[432,172],[465,205],[510,235],[538,268],[570,285],[560,300],[530,310],[495,320],[500,345],[470,350],[430,360],[425,345],[405,335],[378,340],[348,282],[345,262],[322,250],[318,232]],
+"Иссык-Кульская область":[[432,172],[470,152],[520,145],[528,128],[560,132],[600,150],[650,150],[690,170],[722,205],[700,215],[655,225],[630,250],[600,270],[570,285],[538,268],[510,235],[465,205]],
+"Ошская область":[[236,300],[268,298],[296,291],[320,290],[348,282],[378,340],[345,368],[320,378],[318,425],[300,430],[270,445],[250,450],[225,432],[205,425],[165,412],[162,405],[190,395],[200,395],[212,375],[205,355],[222,340],[228,318]],
+"Баткенская область":[[18,395],[20,375],[35,368],[60,365],[80,372],[100,382],[112,375],[125,358],[150,353],[175,358],[195,365],[212,375],[200,395],[190,395],[162,405],[165,412],[155,425],[138,430],[110,432],[100,410],[80,398],[55,402],[30,405]]};
+const DOT={"Бишкек":[357,133],"Ош (город)":[236,338]};
+const COL={"Таласская область":0xa78bfa,"Чуйская область":0xffe066,"Джалал-Абадская область":0xc9a96e,"Нарынская область":0x8bc34a,"Иссык-Кульская область":0xff9f43,"Ошская область":0xffb88c,"Баткенская область":0x7be04a};
+const OX=370,OY=285;
+const SB="https://zualfyvjlbmpqaufufgz.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1YWxmeXZqbGJtcHFhdWZ1Zmd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMzg2NzIsImV4cCI6MjEwOTYxNDY3Mn0.Chjj8GX07XRyh_dRpam8ekK1rFQqWtCputNNVIcLLXA";
+let P=[],COUNTS={},TOK=null,EMAIL="",canEdit=false,sel=null,mode="pub",online=true;
+const TOTAL=()=>Object.values(cnt()).reduce((a,b)=>a+b,0);
+async function api(path,opt={}){const r=await fetch(SB+path,{...opt,headers:{apikey:KEY,Authorization:"Bearer "+(TOK||KEY),"Content-Type":"application/json",Prefer:"return=minimal",...(opt.headers||{})}});const tx=await r.text();if(!r.ok)throw new Error(tx);return tx?JSON.parse(tx):null}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cnt=()=>{const c={};N.forEach(n=>c[n]=COUNTS[n]||0);return c};
+const ranked=()=>{const c=cnt();return N.map(n=>({n,c:c[n]})).sort((a,b)=>b.c-a.c||N.indexOf(a.n)-N.indexOf(b.n))};
+const place=n=>ranked().findIndex(x=>x.n===n)+1;const pad=n=>"#"+String(n).padStart(4,"0");
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),2400)}
+function warn(t){const e=$("#warn");e.hidden=!t;e.textContent=t||""}
+
+/* ===== 3D ===== */
+let T3={};
+function init3D(){
+ const box=$("#stage");
+ if(!window.THREE){box.innerHTML='<div class="muted" style="padding:30px">3D не загрузился (нет доступа к cdnjs).</div>';return}
+ const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,1,1,4000),rd=new THREE.WebGLRenderer({antialias:true,alpha:true});
+ rd.setPixelRatio(Math.min(devicePixelRatio,2));box.appendChild(rd.domElement);
+ sc.add(new THREE.AmbientLight(0xffffff,.75));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(-200,400,300);sc.add(dl);
+ const pl=new THREE.PointLight(0x5ee7ff,.6,1500);pl.position.set(300,200,-100);sc.add(pl);
+ const grp=new THREE.Group();sc.add(grp);const meshes=[],items={};
+ for(const n in G){
+  const sh=new THREE.Shape(G[n].map(p=>new THREE.Vector2(p[0]-OX,-(p[1]-OY))));
+  const geo=new THREE.ExtrudeGeometry(sh,{depth:10,bevelEnabled:true,bevelSize:1.5,bevelThickness:1.5,bevelSegments:2});geo.rotateX(-Math.PI/2);
+  const m=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({color:COL[n],shininess:90,specular:0x888888,emissive:0x000000}));m.userData.n=n;grp.add(m);meshes.push(m);
+  const ed=new THREE.LineSegments(new THREE.EdgesGeometry(geo,30),new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.65}));grp.add(ed);
+  const c=G[n].reduce((a,p)=>[a[0]+p[0]/G[n].length,a[1]+p[1]/G[n].length],[0,0]);items[n]={x:c[0]-OX,z:c[1]-OY};
+ }
+ for(const n in DOT)items[n]={x:DOT[n][0]-OX,z:DOT[n][1]-OY};
+ const lake=new THREE.Mesh(new THREE.CircleGeometry(1,40),new THREE.MeshPhongMaterial({color:0x4fc3f7,shininess:120,transparent:true,opacity:.9}));
+ lake.rotation.x=-Math.PI/2;lake.rotation.z=-.1;lake.scale.set(50,15,1);lake.position.set(520-OX,12.5,180-OY);grp.add(lake);
+ N.forEach(n=>{const it=items[n];
+  const b=new THREE.Mesh(new THREE.BoxGeometry(n.includes("(")||n==="Бишкек"?9:16,1,n.includes("(")||n==="Бишкек"?9:16),new THREE.MeshPhongMaterial({color:0xff4d5e,emissive:0x550a14,shininess:120,transparent:true,opacity:.92}));
+  b.userData.n=n;b.position.set(it.x,11,it.z);grp.add(b);it.bar=b;it.h=0;it.last=-1;
+  const cv=document.createElement("canvas");cv.width=256;cv.height=96;const tx=new THREE.CanvasTexture(cv);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false}));sp.scale.set(84,31.5,1);grp.add(sp);it.sp=sp;it.cv=cv;it.tx=tx;it.pos=1});
+ T3={sc,cam,rd,grp,meshes,items,dist:560,rx:.75,ry:0,drag:0,idle:0};
+ const rs=()=>{const w=box.clientWidth,h=box.clientHeight;rd.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()};new ResizeObserver(rs).observe(box);rs();
+ let dn=null,ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+ const pick=e=>{const r=rd.domElement.getBoundingClientRect();mv.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mv,cam);return ray.intersectObjects([...N.map(n=>items[n].bar),...meshes])[0]};
+ box.addEventListener("pointerdown",e=>{dn={x:e.clientX,y:e.clientY,m:0};box.setPointerCapture(e.pointerId);box.style.cursor="grabbing"});
+ box.addEventListener("pointermove",e=>{if(dn){const dx=e.clientX-dn.x,dy=e.clientY-dn.y;dn.m+=Math.abs(dx)+Math.abs(dy);dn.x=e.clientX;dn.y=e.clientY;T3.ry+=dx*.007;T3.rx=Math.max(.15,Math.min(1.35,T3.rx+dy*.005));T3.idle=performance.now()}else{const h=pick(e);box.style.cursor=h?"pointer":"grab"}});
+ box.addEventListener("pointerup",e=>{box.style.cursor="grab";if(dn&&dn.m<6){const h=pick(e);sel=h?h.object.userData.n:null;info();drawRank()}dn=null});
+ box.addEventListener("wheel",e=>{e.preventDefault();T3.dist=Math.max(250,Math.min(900,T3.dist+e.deltaY*.5))},{passive:false});
+ const loop=t=>{requestAnimationFrame(loop);if(!box.offsetParent)return;
+  if(performance.now()-T3.idle>2500)T3.ry=Math.sin(t/3000)*.35;
+  grp.rotation.y+=(T3.ry-grp.rotation.y)*.12;
+  cam.position.set(0,Math.sin(T3.rx)*T3.dist,Math.cos(T3.rx)*T3.dist);cam.lookAt(0,0,0);
+  const c=cnt(),mx=Math.max(1,...Object.values(c));
+  N.forEach(n=>{const it=items[n],tg=c[n]?Math.max(8,c[n]/mx*120):0;it.h+=(tg-it.h)*.08;const h=Math.max(.01,it.h);it.bar.scale.y=h;it.bar.position.y=11+h/2;it.bar.visible=it.h>.3;
+   it.bar.material.color.setHex(place(n)===1&&c[n]?0xffd166:0xff4d5e);it.bar.material.emissive.setHex(sel===n?0x777777:place(n)===1&&c[n]?0x664400:0x550a14);
+   it.sp.position.set(it.x,11+h+16,it.z);
+   if(it.last!==c[n]||it.sl!==(sel===n)){it.last=c[n];it.sl=sel===n;const x=it.cv.getContext("2d");x.clearRect(0,0,256,96);x.fillStyle=it.sl?"rgba(255,209,102,.95)":"rgba(10,14,40,.72)";x.beginPath();x.roundRect(8,10,240,76,22);x.fill();x.fillStyle=it.sl?"#1a1030":"#fff";x.textAlign="center";x.font="700 24px system-ui";x.fillText(n.replace(" область","").replace(" (город)"," г."),128,42);x.font="800 30px system-ui";x.fillText(c[n],128,76);it.tx.needsUpdate=true}});
+  meshes.forEach(m=>{m.material.emissive.setHex(sel===m.userData.n?0x555555:0);m.position.y=sel===m.userData.n?3:0});
+  rd.render(sc,cam)};requestAnimationFrame(loop);
+}
+function info(){if(!sel)return;$("#mapInfo").textContent=`${sel}: ${cnt()[sel]} участн. · место ${place(sel)}`}
+
+/* ===== public ===== */
+function drawRank(){const r=ranked(),mx=Math.max(1,r[0].c);
+ $("#rank").innerHTML=r.map((x,i)=>`<div class="row" style="animation-delay:${i*45}ms;${sel===x.n?"outline:2px solid var(--cy)":""}" data-n="${x.n}"><div class="n">${i+1}</div><div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${x.n}</span><b>${x.c}</b></div><div class="bar"><i style="width:${x.c/mx*100}%"></i></div></div></div>`).join("");
+ $("#rank").querySelectorAll(".row").forEach(e=>e.onclick=()=>{sel=e.dataset.n;info();drawRank()})}
+function stats(){$("#sTot").textContent=TOTAL();const r=ranked();$("#sLead").textContent=r[0].c?r[0].n.replace(" область","").replace(" (город)",""):"—";const d=new Date().toDateString();$("#sToday").textContent=P.filter(p=>new Date(p.t).toDateString()===d).length}
+function search(){const q=$("#q").value.trim().toLowerCase().replace(/^@/,""),box=$("#res");
+ if(!q){box.innerHTML='<div class="muted" style="margin-top:8px">Введи ник, чтобы найти себя.</div>';return}
+ const f=P.filter(p=>p.ok&&(p.nick.includes(q)||(p.name||"").toLowerCase().includes(q)||p.r.toLowerCase().includes(q))).slice(0,20);
+ box.innerHTML=f.length?f.map(p=>`<div class="glass found"><b>@${esc(p.nick)}</b> <span class="tag">Найден</span><br><span class="muted">Регион: ${esc(p.r)} · Место региона: ${place(p.r)} · Участник ${pad(p.n)}</span></div>`).join(""):'<div class="glass found">Тебя пока нет в системе 🙈<br><span class="muted">Подпишись на наш Instagram и напиши в Direct название своей области — мы добавим тебя на карту.</span></div>'}
+
+/* ===== admin ===== */
+async function load(){try{const [c,p]=await Promise.all([api("/rest/v1/region_counts?select=region,cnt"),api("/rest/v1/participants?select=nick,region,name,n,consent,created_at&order=n.asc")]);
+ COUNTS={};c.forEach(x=>COUNTS[x.region]=x.cnt);P=p.map(x=>({nick:x.nick,r:x.region,name:x.name,n:x.n,ok:x.consent,t:Date.parse(x.created_at)}));
+ if(canEdit){try{window.LOGS=await api("/rest/v1/log?select=msg&order=created_at.desc&limit=3")}catch(e){}}
+ online=true}catch(e){online=false}renderAll();status()}
+function status(){warn(online?"":"Нет связи с базой данных — повторяю попытку…")}
+async function log(m){try{await api("/rest/v1/log",{method:"POST",body:JSON.stringify({msg:m})})}catch(e){}}
+async function addP(nick,r,name,ok,quiet){nick=nick.trim().replace(/^@/,"").toLowerCase();
+ if(!/^[a-z0-9._]{1,30}$/.test(nick))return toast("Некорректный Instagram-ник");
+ if(P.some(p=>p.nick===nick))return toast("Дубликат: такой ник уже есть");
+ try{await api("/rest/v1/participants",{method:"POST",body:JSON.stringify({nick,region:r,name:name||"",consent:!!ok})});await log(`Добавлен @${nick} → ${r}`);P.push({nick,r,n:0,ok});if(!quiet){toast("Участник добавлен ✓");await load()}return true}catch(e){toast("Ошибка записи: нет прав или дубликат")}}
+function adminList(){if(mode!=="adm"||!canEdit)return;
+ $("#list").innerHTML=P.slice().sort((a,b)=>b.n-a.n).map(p=>`<div class="row"><div style="flex:1;font-size:13px">@${esc(p.nick)}<br><span class="muted">${esc(p.r)} · ${pad(p.n)}${p.ok?"":" · без согласия"}</span></div><button class="btn glass sm" data-n="${esc(p.nick)}">✕</button></div>`).join("")||'<span class="muted">Пусто</span>';
+ $("#list").querySelectorAll("button").forEach(b=>b.onclick=async()=>{try{await api("/rest/v1/participants?nick=eq."+encodeURIComponent(b.dataset.n),{method:"DELETE"});await log("Удалён @"+b.dataset.n);await load()}catch(e){toast("Нет прав")}});
+ $("#hist").textContent=(window.LOGS||[]).map(l=>l.msg).join(" · ")}
+$("#add").onclick=async()=>{if(await addP($("#aNick").value,$("#aReg").value,$("#aName").value,$("#aOk").checked)){$("#aNick").value="";$("#aName").value=""}};
+$("#demo").onclick=async()=>{const w=["aibek","nurzat","aigerim","bakyt","ermek","mirlan","kanykei","azamat","zhyldyz","tilek"];for(let i=0;i<w.length;i++)await addP(w[i]+"_kg",N[(i*3+i%4)%N.length],"",true,true);await load();toast("Демо-данные загружены")};
+$("#wipe").onclick=async()=>{if(confirm("Удалить всех участников?")){try{await api("/rest/v1/participants?n=gt.0",{method:"DELETE"});await log("Очистка");await load()}catch(e){toast("Нет прав")}}};
+async function login(signup){const email=$("#lEmail").value.trim(),password=$("#lPass").value;
+ try{const r=await fetch(SB+"/auth/v1/"+(signup?"signup":"token?grant_type=password"),{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})});const j=await r.json();
+  if(!r.ok)throw new Error(j.msg||j.error_description||"Ошибка входа");
+  if(!j.access_token)return toast("Аккаунт создан. Подтверди почту и войди");
+  TOK=j.access_token;EMAIL=email;try{localStorage.setItem("kgtok",JSON.stringify({t:TOK,e:email,x:Date.now()+(j.expires_in||3600)*1000}))}catch(e){}
+  await checkAdmin()}catch(e){toast(e.message)}}
+async function checkAdmin(){canEdit=false;if(TOK){try{canEdit=(await api("/rest/v1/admins?select=email")).length>0}catch(e){TOK=null}}route();await load()}
+$("#lIn").onclick=()=>login(false);$("#lUp").onclick=()=>login(true);
+$("#logout").onclick=()=>{TOK=null;canEdit=false;try{localStorage.removeItem("kgtok")}catch(e){}route();load()};
+
+/* ===== caption ===== */
+const V=[["выходит на карту Кыргызстана!","Наше соревнование продолжается! 🔥"],["борется за первое место!","Каждый участник делает свой регион сильнее 💪"],["набирает силу!","Покажем, кто самый активный! 🚀"]];let ci=0;
+function caption(s){ci=(ci+s)%V.length;const r=$("#sReg").value,all=r==="all",c=all?TOTAL():cnt()[r],v=V[ci];
+ $("#cap").value=`🇰🇬 ${all?"Весь Кыргызстан":r} ${v[0]}\n\n${v[1]}\n${all?"Участников":"Участников в области"}: ${c}${all?"":" · место "+place(r)}\n\nХочешь увидеть свой Instagram на карте?\n📩 Напиши нам в Direct название своей области!\n\n#Кыргызстан #Кыргызстан2026 ${all?"#Kyrgyzstan":"#"+r.replace(/\s.*/,"")} #КыргызстанКарта #ReelsKG #InstagramKG`}
+$("#regen").onclick=()=>caption(1);$("#sReg").onchange=()=>caption(0);
+$("#copy").onclick=async()=>{try{await navigator.clipboard.writeText($("#cap").value);toast("Скопировано ✓")}catch(e){$("#cap").select();toast("Выделено — скопируй вручную")}};
+
+/* ===== studio ===== */
+const cv=$("#cv"),cx=cv.getContext("2d"),ST=[...Array(90)].map((_,i)=>[(i*97%360),(i*211%640),(i%3)+.6]);
+const ease=x=>{x=Math.min(1,Math.max(0,x));return x*x*(3-2*x)},mix=(a,b,t)=>a+(b-a)*t;
+function frame(t,reg){const all=reg==="all",c=cnt();
+ const g=cx.createRadialGradient(180,320,10,180,320,420);g.addColorStop(0,"#1b1050");g.addColorStop(1,"#050816");cx.fillStyle=g;cx.fillRect(0,0,360,640);
+ ST.forEach(s=>{cx.globalAlpha=.4+.6*Math.abs(Math.sin(t*2+s[0]));cx.fillStyle="#fff";cx.fillRect(s[0],s[1],s[2],s[2])});cx.globalAlpha=1;
+ if(t<4){const k=ease(t/3.5),r=mix(50,330,k),eg=cx.createRadialGradient(150,290,5,180,320,r);eg.addColorStop(0,"#5ee7ff");eg.addColorStop(.6,"#1a5cff");eg.addColorStop(1,"#041040");cx.globalAlpha=1-ease(t-2.8);cx.fillStyle=eg;cx.beginPath();cx.arc(180,320,r,0,7);cx.fill();cx.globalAlpha=1}
+ if(t>=2.6){let sc=.5,px=OX,py=OY;if(!all&&t>5){const p=G[reg]||[[OX,OY]],k=ease((t-5)/2.5);sc=mix(.5,1.5,k);px=mix(OX,p.reduce((s,q)=>s+q[0],0)/p.length,k);py=mix(OY,p.reduce((s,q)=>s+q[1],0)/p.length,k)}
+  cx.save();cx.globalAlpha=ease((t-2.6)/1.2);cx.translate(180,250);cx.scale(sc,sc);cx.translate(-px,-py);
+  for(const n in G){const hit=all||n===reg;cx.beginPath();G[n].forEach((q,i)=>i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]));cx.closePath();cx.fillStyle=hit?`rgba(255,77,94,${.55+.25*Math.sin(t*4)})`:"rgba(255,255,255,.1)";cx.shadowColor=hit?"#ff4d5e":"transparent";cx.shadowBlur=hit?25:0;cx.fill();cx.shadowBlur=0;cx.strokeStyle="rgba(255,255,255,.7)";cx.lineWidth=1.5/sc;cx.stroke()}
+  cx.restore();cx.globalAlpha=1}
+ cx.textAlign="center";cx.fillStyle="#fff";cx.font="800 26px system-ui";
+ if(t<4){cx.globalAlpha=ease(t)*(1-ease(t-3));cx.fillText("КЫРГЫЗСТАН",180,90);cx.globalAlpha=1}
+ if(t>=5&&t<13){cx.globalAlpha=ease(t-5);cx.font="800 22px system-ui";cx.fillText(all?"ВЕСЬ КЫРГЫЗСТАН":reg.toUpperCase(),180,70);cx.globalAlpha=1}
+ if(t>=8&&t<13){const L=(all?P:P.filter(p=>p.r===reg)).slice(-6).reverse();cx.fillStyle="rgba(10,10,30,.55)";cx.beginPath();cx.roundRect(30,400,300,200,22);cx.fill();cx.fillStyle="#fff";cx.font="600 17px system-ui";
+  if(!L.length)cx.fillText("Будь первым участником!",180,505);L.forEach((p,i)=>{cx.globalAlpha=ease((t-8.2-i*.35)/.5);cx.fillText("@"+p.nick,180,436+i*30+(1-cx.globalAlpha)*20)});cx.globalAlpha=1}
+ if(t>=11&&t<13.2){cx.globalAlpha=ease(t-11);cx.fillStyle="#ffd166";cx.font="800 54px system-ui";cx.fillText(all?TOTAL():c[reg],180,150);cx.font="600 16px system-ui";cx.fillStyle="#fff";cx.fillText(all?"участников":"участников · место "+place(reg),180,176);cx.globalAlpha=1}
+ if(t>=13){cx.globalAlpha=ease(t-13);cx.fillStyle="rgba(5,8,22,.85)";cx.fillRect(0,0,360,640);cx.fillStyle="#fff";cx.font="800 24px system-ui";["Хочешь увидеть себя","на карте Кыргызстана?"].forEach((s,i)=>cx.fillText(s,180,270+i*34));cx.fillStyle="#ffd166";cx.font="700 22px system-ui";cx.fillText("Напиши нам в Direct! 📩",180,370);cx.globalAlpha=1}}
+let anim=null;function play(done){cancelAnimationFrame(anim);const reg=$("#sReg").value,t0=performance.now();const loop=()=>{const t=(performance.now()-t0)/1000;frame(Math.min(t,15),reg);if(t<15.2)anim=requestAnimationFrame(loop);else if(done)done()};loop()}
+$("#prev").onclick=()=>play();
+$("#rec").onclick=()=>{if(!cv.captureStream||!window.MediaRecorder)return toast("Запись не поддерживается в этом браузере");
+ const reg=$("#sReg").value,ch=[],mr=new MediaRecorder(cv.captureStream(30),{mimeType:MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm"});
+ mr.ondataavailable=e=>e.data.size&&ch.push(e.data);
+ mr.onstop=async()=>{const blob=new Blob(ch,{type:"video/webm"}),url=URL.createObjectURL(blob),d=document.createElement("div");d.className="row";
+  d.innerHTML=`<video src="${url}" controls playsinline></video><div class="muted" style="flex:1">${reg==="all"?"Весь Кыргызстан":esc(reg)}<br>15 сек · Готово<br></div>`;
+  {const a=document.createElement("a");a.href=url;a.download="reels-kg.webm";a.className="btn glass sm";a.textContent="⬇ Скачать";d.lastChild.appendChild(a)}
+  const lib=$("#lib");if(!lib.querySelector("video"))lib.innerHTML="";lib.prepend(d);$("#recMsg").textContent="Готово! Ролик в видеотеке";$("#rec").disabled=false};
+ $("#rec").disabled=true;$("#recMsg").textContent="Идёт запись…";mr.start();play(()=>mr.stop())};
+
+/* ===== shell ===== */
+function show(v){document.querySelectorAll(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));scrollTo({top:0,behavior:"smooth"})}
+function go(v){document.startViewTransition?document.startViewTransition(()=>show(v)):show(v)}
+function route(){mode=location.hash==="#admin"?"adm":"pub";const a=mode==="adm";
+ $("#ttl").textContent=a?"⚙ Панель администратора":"🇰🇬 Карта активности";$("#sub").textContent=a?"Закрытый раздел":"Соревнование областей Кыргызстана · 3D";
+ $("#nav").innerHTML=a?(canEdit?'<button data-v="admin">👥 Участники</button><button data-v="studio">🎬 Студия</button><button data-v="out">🌍 На сайт</button>':'<button data-v="admin" class="on">🔐 Вход</button><button data-v="out">🌍 На сайт</button>'):'<button data-v="map">🗺 3D Карта</button><button data-v="search">🔎 Поиск</button>';
+ $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>b.dataset.v==="out"?location.hash="":go(b.dataset.v));
+ $("#login").hidden=!(a&&!canEdit);$("#adm").hidden=!(a&&canEdit);$("#logout").hidden=!(a&&TOK);
+ if(a&&TOK&&!canEdit)$("#lMsg").textContent="Аккаунт "+EMAIL+" не входит в список администраторов.";else $("#lMsg").textContent="";
+ show(a?"admin":"map");adminList();caption(0);status()}
+addEventListener("hashchange",route);
+document.addEventListener("pointermove",e=>{const b=e.target.closest&&e.target.closest(".btn");if(b){const r=b.getBoundingClientRect();b.style.setProperty("--x",(e.clientX-r.left)+"px");b.style.setProperty("--y",(e.clientY-r.top)+"px")}});
+$("#q").oninput=search;
+$("#theme").onclick=()=>{const d=document.documentElement,cur=d.dataset.theme||(matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");d.dataset.theme=cur==="dark"?"light":"dark"};
+["#aReg","#sReg"].forEach((s,i)=>$(s).innerHTML=(i?'<option value="all">Весь Кыргызстан</option>':"")+N.map(n=>`<option>${n}</option>`).join(""));
+function renderAll(){drawRank();stats();search();adminList();caption(0);info()}
+try{const s=JSON.parse(localStorage.getItem("kgtok")||"null");if(s&&s.x>Date.now()){TOK=s.t;EMAIL=s.e}}catch(e){}
+init3D();route();renderAll();frame(14,"all");
+(async()=>{await checkAdmin();setInterval(()=>{if(!document.hidden&&!dragging())load()},20000)})();
+function dragging(){return false}
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+let dp=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;$("#inst").hidden=false});
+$("#inst").onclick=async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;$("#inst").hidden=true}};
+</script>
+</body>
+</html>
